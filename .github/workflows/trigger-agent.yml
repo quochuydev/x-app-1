@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call Agent Repository
-        uses: quochuydev/x-agent
+        uses: peter-evans/repository-dispatch@v3
         with:
-          repository: quochuydev/x-app-1
+          repository: quochuydev/x-agent
           event-type: generate-code
           client-payload: |
             {
