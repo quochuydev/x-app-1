@@ -11,6 +11,7 @@ jobs:
       - name: Call Agent Repository
         uses: peter-evans/repository-dispatch@v3
         with:
+          token: ${{ secrets.AGENT_TRIGGER_TOKEN }}
           repository: quochuydev/x-agent
           event-type: generate-code
           client-payload: |
