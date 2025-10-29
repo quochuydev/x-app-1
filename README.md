@@ -1,66 +1,119 @@
-# x-app-1
+# Next.js Self Hosting Example
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Self, and more.
+This repo shows how to deploy a Next.js app and a PostgreSQL database on a Ubuntu Linux server using Docker and Nginx. It showcases using several features of Next.js like caching, ISR, environment variables, and more.
 
-## Features
+[**📹 Watch the tutorial (45m)**](https://www.youtube.com/watch?v=sIVL4JMqRfc)
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
-- **Turborepo** - Optimized monorepo build system
+[![Self Hosting Video Thumbnail](https://img.youtube.com/vi/sIVL4JMqRfc/0.jpg)](https://www.youtube.com/watch?v=sIVL4JMqRfc)
 
-## Getting Started
+## Prerequisites
 
-First, install the dependencies:
+1. Purchase a domain name
+2. Purchase a Linux Ubuntu server (e.g. [droplet](https://www.digitalocean.com/products/droplets))
+3. Create an `A` DNS record pointing to your server IPv4 address
+
+## Quickstart
+
+1. **SSH into your server**:
+
+   ```bash
+   ssh root@your_server_ip
+   ```
+
+2. **Download the deployment script**:
+
+   ```bash
+   curl -o ~/deploy.sh https://raw.githubusercontent.com/leerob/next-self-host/main/deploy.sh
+   ```
+
+   You can then modify the email and domain name variables inside of the script to use your own.
+
+3. **Run the deployment script**:
+
+   ```bash
+   chmod +x ~/deploy.sh
+   ./deploy.sh
+   ```
+
+## Supported Features
+
+This demo tries to showcase many different Next.js features.
+
+- Image Optimization
+- Streaming
+- Talking to a Postgres database
+- Caching
+- Incremental Static Regeneration
+- Reading environment variables
+- Using Middleware
+- Running code on server startup
+- A cron that hits a Route Handler
+
+## Deploy Script
+
+I've included a Bash script which does the following:
+
+1. Installs all the necessary packages for your server
+1. Installs Docker, Docker Compose, and Nginx
+1. Clones this repository
+1. Generates an SSL certificate
+1. Builds your Next.js application from the Dockerfile
+1. Sets up Nginx and configures HTTPS and rate limting
+1. Sets up a cron which clears the database every 10m
+1. Creates a `.env` file with your Postgres database creds
+
+Once the deployment completes, your Next.js app will be available at:
+
+```
+http://your-provided-domain.com
+```
+
+Both the Next.js app and PostgreSQL database will be up and running in Docker containers. To set up your database, you could install `npm` inside your Postgres container and use the Drizzle scripts, or you can use `psql`:
 
 ```bash
-pnpm install
+docker exec -it myapp-db-1 sh
+apk add --no-cache postgresql-client
+psql -U myuser -d mydatabase -c '
+CREATE TABLE IF NOT EXISTS "todos" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "content" varchar(255) NOT NULL,
+  "completed" boolean DEFAULT false,
+  "created_at" timestamp DEFAULT now()
+);'
 ```
 
-## Database Setup
+For pushing subsequent updates, I also provided an `update.sh` script as an example.
 
-This project uses SQLite with Drizzle ORM.
+## Running Locally
 
-1. Start the local SQLite database:
+If you want to run this setup locally using Docker, you can follow these steps:
 
 ```bash
-cd apps/web && pnpm db:local
+docker-compose up -d
 ```
 
-2. Update your `.env` file in the `apps/web` directory with the appropriate connection details if needed.
+This will start both services and make your Next.js app available at `http://localhost:3000` with the PostgreSQL database running in the background. We also create a network so that our two containers can communicate with each other.
 
-3. Apply the schema to your database:
+If you want to view the contents of the local database, you can use Drizzle Studio:
 
 ```bash
-pnpm db:push
+bun run db:studio
 ```
 
-Then, run the development server:
+## Helpful Commands
 
-```bash
-pnpm dev
-```
+- `docker-compose ps` – check status of Docker containers
+- `docker-compose logs web` – view Next.js output logs
+- `docker-compose logs cron` – view cron logs
+- `docker-compose down` - shut down the Docker containers
+- `docker-compose up -d` - start containers in the background
+- `sudo systemctl restart nginx` - restart nginx
+- `docker exec -it myapp-web-1 sh` - enter Next.js Docker container
+- `docker exec -it myapp-db-1 psql -U myuser -d mydatabase` - enter Postgres db
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see your fullstack application.
+## Other Resources
 
-## Project Structure
-
-```
-x-app-1/
-├── apps/
-│   └── web/         # Fullstack application (Next.js)
-├── packages/
-│   ├── api/         # API layer / business logic
-```
-
-## Available Scripts
-
-- `pnpm dev`: Start all applications in development mode
-- `pnpm build`: Build all applications
-- `pnpm check-types`: Check TypeScript types across all apps
-- `pnpm db:push`: Push schema changes to database
-- `pnpm db:studio`: Open database studio UI
-- `cd apps/web && pnpm db:local`: Start the local SQLite database
+- [Kubernetes Example](https://github.com/ezeparziale/nextjs-k8s)
+- [Redis Cache Adapter for Next.js](https://github.com/vercel/next.js/tree/canary/examples/cache-handler-redis)
+- [ipx – Image optimization library](https://github.com/unjs/ipx)
+- [OrbStack - Fast Docker desktop client](https://orbstack.dev/)
